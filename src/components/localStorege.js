@@ -1,0 +1,1 @@
+export const myContacts = localStorage.getItem('myContacts');
