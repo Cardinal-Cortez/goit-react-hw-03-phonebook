@@ -5,7 +5,7 @@ import { InputNumber } from "components/InputNumber";
 import { Filter } from "components/ButtonAdd";
 import { nanoid } from 'nanoid';
 import { ContactList } from "components/ContactList";
-import { myContacts } from "components/localStorege";
+
 export class Input extends Component {
 
  state = {
@@ -15,51 +15,53 @@ export class Input extends Component {
       {id: 'id-3', name: 'Eden Clements', number: '645-17-79'},
       {id: 'id-4', name: 'Annie Copeland', number: '227-91-26'},
       ],
-      name: '',
-      filter: '',
-      number: ''
+    name: '',
+    filter: '',
+    number: ''
+  };
+
+  componentDidMount() {
+    const storedContacts = localStorage.getItem("myContacts");
+    if (storedContacts) {
+      this.setState({ contacts: JSON.parse(storedContacts) });
+    }
   }
-componentDidMount() {
-  if (myContacts) {
-    this.setState({ contacts: JSON.parse(myContacts) });
-  }
-}
 
+  handleDeleteContact = (id) => {
+    this.setState(
+      (prevState) => ({
+        contacts: prevState.contacts.filter((e) => e.id !== id)
+      }),
+      () => {
+        localStorage.setItem("myContacts", JSON.stringify(this.state.contacts));
+      }
+    );
+  };
 
-handleDeleteContact = (id) => {
-  this.setState((prevState) => ({
-    contacts: prevState.contacts.filter((e) => e.id !== id)
-  }), () => {
-    localStorage.setItem('myContacts', JSON.stringify(this.state.contacts));
-  });
-};
-
-
-
-handleChange = (e) => {
+  handleChange = (e) => {
     const { value } = e.target;
     this.setState({
-      filter: value,
+      filter: value
     });
-};
+  };
 
   handleNumberChange = (e) => {
     this.setState({
-        number: e.target.value ,
-    })
-};
+      number: e.target.value
+    });
+  };
 
   handleNameChange = (e) => {
     this.setState({
-        name: e.target.value,
-    })
-};
+      name: e.target.value
+    });
+  };
 
   handleSubmit = (e) => {
     e.preventDefault();
     const { name, number } = this.state;
     const existingContact = this.state.contacts.find((contact) => {
-      return contact.name.toLowerCase() === name.toLowerCase() && contact.number === number;
+      return contact.name.toLowerCase() === name.toLowerCase();
     });
     if (existingContact) {
       alert(`${name} is already in contacts.`);
@@ -68,42 +70,43 @@ handleChange = (e) => {
     const id = nanoid();
     const newContact = { id, name, number };
     const updatedContacts = [...this.state.contacts, newContact];
-    localStorage.setItem('myContacts', JSON.stringify(updatedContacts));
+    localStorage.setItem("myContacts", JSON.stringify(updatedContacts));
     this.setState({
       contacts: updatedContacts,
       name: '',
       number: ''
     });
-  }
+  };
+
+  filters = () => {
+    const { contacts, filter } = this.state;
+    return contacts.filter((item) =>
+      item.name.toLowerCase().includes(filter.toLowerCase())
+    );
+  };
 
   render() {
-      const { state, handleChange, handleNameChange, handleNumberChange, handleSubmit, handleDeleteContact} = this;
-      return (
-        <Section>
-          <H1>Phonebook</H1>
-          <ContactForm
-            onSubmit={handleSubmit}
-            value={state.contacts}
-          >
-            <InputName
-              handleNameChange={handleNameChange}
-              name={this.state.name}
-            />
-            <InputNumber
-              handleNumberChange={handleNumberChange}
-              number={this.state.number}
-            />
-          <AddContact type="submit" >Add Contact</AddContact>
-          </ContactForm>
-          <h2>Contacts</h2>
-          <Filter state={state}
-            handleChange={handleChange} />
-          <ContactList
-            filter={this.state.filter}
-            contacts={this.state.contacts}
-            onDeleteContact={handleDeleteContact}
+    const { name, number, filter } = this.state;
+
+    return (
+      <Section>
+        <H1>Phonebook</H1>
+        <ContactForm onSubmit={this.handleSubmit}>
+          <InputName handleNameChange={this.handleNameChange} name={name} />
+          <InputNumber
+            handleNumberChange={this.handleNumberChange}
+            number={number}
           />
-        </Section>
-      );
-    };
-};
+          <AddContact type="submit">Add Contact</AddContact>
+        </ContactForm>
+        <h2>Contacts</h2>
+        <Filter filter={filter} handleChange={this.handleChange} />
+        <ContactList
+          filter={filter}
+          contacts={this.filters()}
+          onDeleteContact={this.handleDeleteContact}
+        />
+      </Section>
+    );
+  }
+}
